@@ -1,14 +1,15 @@
 import socket as s
 import json
+import time
 
 class Client():
     
-    def __init__(self, port, host, dataPort):
+    def __init__(self, port, host):
         self.socketPort = port
-        self.dataPort = dataPort
         self.socket = s.socket()
         self.host = host
         self.path = "localFiles"
+        self.dataPort = self.socketPort + 10
 
     def clientStart(self):
         try:
@@ -16,9 +17,9 @@ class Client():
         except:
             print(s.error())
             return
-        print("Connected to the server " + self.host)
-        
+        print("Conectado al servidor " + self.host)
         self.commandMenu()
+    
     def receiveData(self):
         response = self.socket.recv(1024)
         data = json.loads(response.decode('utf-8'))
@@ -44,17 +45,21 @@ class Client():
             }
         validData = json.dumps(dataPacket).encode('utf-8')    
         self.socket.sendall(validData)
+        
+        time.sleep(1)
+        
         dataSock = s.socket(s.AF_INET, s.SOCK_STREAM)
-        dataSock.bind((self.host, self.dataPort))
-        dataSock.listen(1)
-        conn, _ = dataSock.accept()
+        dataSock.connect((self.host, self.dataPort))
         with open(self.path+"/"+fileName, "wb") as file:
-            data = conn.recv(1024)
-            while (data):
-                file.write(data)
-                data = conn.recv(1024)
+            try:
+                data = dataSock.recv(1024)
+                while (data):
+                    file.write(data)
+                    data = dataSock.recv(1024)
+            except Exception as e: 
+                print(e)
         dataSock.close()
-        return "Archivo descargado con éxito"
+        print("Archivo descargado con exito")
     
     def sendFileUpload(self, fileName): 
         dataPacket = {
@@ -63,28 +68,32 @@ class Client():
             }
         validData = json.dumps(dataPacket).encode('utf-8')    
         self.socket.sendall(validData)
+        
+        time.sleep(1)
+
         dataSock = s.socket(s.AF_INET, s.SOCK_STREAM)
-        dataSock.bind((self.host, self.dataPort))
-        dataSock.listen(1)
-        conn, _ = dataSock.accept()
+        dataSock.connect((self.host, self.dataPort))
         with open(self.path+"/"+fileName, "rb") as file:
-            data = file.read(1024)
-            while (data):
-                conn.sendall(data)
+            try:
                 data = file.read(1024)
+                while (data):
+                    dataSock.sendall(data)
+                    data = file.read(1024)
+            except Exception as e:
+                print(e)
         dataSock.close()
-        return "Archivo subido con éxito"
+        print("Archivo subido con exito")
         
     
     
     def commandMenu(self):
-        entryPoint = input("Bienvenido al server, escoja alguna de las siguientes opciones \n1. Envíar una GET request simple \n2. Envíar una POST request simple \n3. Recibir un archivo tipo PDF \n4. Envíar un archivo \n")
+        entryPoint = input("Bienvenido al server, escoja alguna de las siguientes opciones \n1. Enviar una GET request simple \n2. Enviar una POST request simple \n3. Recibir un archivo \n4. Enviar un archivo \n")
         if(entryPoint is not None):
             if(entryPoint == "1"):
                 self.sendGet()
                 self.receiveData()
             elif(entryPoint == "2"):
-                data = input("Por favor ingrese su primer nombre y género así; \"John, hombre\"")
+                data = input("Por favor ingrese su primer nombre y genero asi; \"John, hombre\"")
                 self.sendPost(data)
                 self.receiveData()
             elif(entryPoint == "3"):
@@ -93,4 +102,4 @@ class Client():
             elif(entryPoint == "4"):
                 data = input("Por favor ingrese el nombre del archivo \n")
                 self.sendFileUpload(data)
-        
+    

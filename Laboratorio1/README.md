@@ -26,19 +26,32 @@ Libreria json versión de Python 3.10.6
 Libreria time versión de Python 3.10.6
 
 ## Cómo se compila y ejecuta.
-Para ejecutar el programa se abren dos terminales y se ejecuta el comando "python main.py" en cada terminal, para así poder abrir el cliente en una y el servidor en otra.
+1. Se debe instalar Python 3.10 (no hay más dependencias).
+2. Clonar el repositorio https://github.com/st0263-2266/lab1-anas122
+3. Si se va a ejecutar el programa en AWS o un servicio similar tiene que asegurarse que se cumplan los siguientes requisitos:  
+ 3.1. Que todas las máquinas estén en el mismo grupo de seguridad o la misma subred.  
+ 3.2. Que las máquinas tengan los puertos que se vayan a utilizar abiertos (Ejemplo: en este caso el código tiene el puerto 8183, tendríamos que abrir el puerto 8183-8193 en el grupo de seguridad, este último porque es necesario para el envio de datos, el cual es el mismo puerto +10).  
+ 3.3. En el archivo "main.py" se deben cambiar en las líneas 7 y 11 las direcciones IP para el servidor y el cliente por la dirección IP privada de la máquina del servidor, en todas las máquinas.
+4. Se abren dos terminales y se ejecuta el comando "python main.py" en cada terminal, para así poder abrir el cliente en una y el servidor en otra. (En caso de que el comando "python main.py" no funcione, se debe utilizar el comando "python3 main.py").
+5. Es importante que al desplegarse el menú que proporciona el programa se elija primero la opción de servidor, la cual es la opción número 1 y en la siguiente terminal se elija la opción 2 que es la de cliente.
 
 ## Detalles técnicos
-El programa funciona en cualquier sistema operativo que tenga Python.
+El programa funciona en cualquier sistema operativo que tenga Python 3.10.
 
 # 4. Descripción del ambiente de EJECUCIÓN (en producción) lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 Python 3.10.6
 
 # IP o nombres de dominio en nube o en la máquina servidor.
-IP de la máquina servidor: 34.194.9.46
+IP elástica de la máquina servidor: 34.194.9.46
 
 ## Una mini guia de como un usuario utilizaría el software o la aplicación
-Para ejecutar el programa se abren dos terminales y se ejecuta el comando "python main.py" en cada terminal, para así poder abrir el cliente en una y el servidor en otra.
+Para utilizar el programa:
+1. Se debe instalar Python 3.10 (no hay más dependencias).
+2. Clonar el repositorio https://github.com/st0263-2266/lab1-anas122
+3. Se abren dos terminales y se ejecuta el comando "python main.py" en cada terminal, para así poder abrir el cliente en una y el servidor en otra. (En caso de que el comando "python main.py" no funcione, se debe utilizar el comando "python3 main.py").
+4. Es importante que al desplegarse el menú que proporciona el programa se elija primero la opción de servidor, la cual es la opción número 1 y en la siguiente terminal se elija la opción 2 que es la de cliente.
+5. Finalmente el usuario envia información por consola con respecto a lo que el programa vaya mostrando paso a paso.
+
 
 # Referencias:
 ## https://github.com/sagudeloo/MyFirstTCPServer/blob/main/server.py 

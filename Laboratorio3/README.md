@@ -42,7 +42,8 @@ Dominio con certificación ssl: https://www.asarangog.tk
 ## Una mini guia de como un usuario utilizaría el software o la aplicación
 El usuario puede acceder desde cualquier navegador al link https://www.asarangog.tk y disfrutar de la aplicación.
 
-## Resultados o pantallazos 
+## Resultados o pantallazos
+![App](https://user-images.githubusercontent.com/37346028/191159573-394807f6-c804-4dfe-9089-1c98ef1cb0ba.PNG)
 
 # 5. Otra información que considere relevante para esta actividad.
 

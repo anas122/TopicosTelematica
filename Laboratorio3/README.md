@@ -35,8 +35,8 @@ Siguiendo el tutorial brindado por el profesor:
 # 4. Descripción del ambiente de EJECUCIÓN (en producción) lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 
 # IP o nombres de dominio en nube o en la máquina servidor.
-IP elástica de la máquina servidor: 34.72.7.237
-Nombre de dominio: asarangog.tk
+IP elástica de la máquina servidor: 34.72.7.237  
+Nombre de dominio: asarangog.tk  
 Dominio con certificación ssl: https://www.asarangog.tk
 
 ## Una mini guia de como un usuario utilizaría el software o la aplicación

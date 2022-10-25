@@ -7,13 +7,18 @@
 # Laboratorio 4
 #
 # 1. Breve descripción de la actividad
-Despliegue de una aplicación Wordpress con Docker en una instancia GCP y asignación de un dominio con certificado SSL. Además, la implementación y conexión de un balanceador de cargas, una base de datos y un servidor de archivos en otras instancias de GCP.
+Despliegue de una aplicación Wordpress con Docker y nginx en una instancia GCP y asignación de un dominio con certificado SSL. Además, la implementación y conexión de un balanceador de cargas, una base de datos y un servidor de archivos en otras instancias de GCP.
 
 ## 1.1. Que aspectos cumplió o desarrolló de la actividad propuesta por el profesor (requerimientos funcionales y no funcionales)
+Despliegue de la aplicación Wordpress con Docker y nginx en la instancia de GCP. Asignación de un dominio propio con certificado SSL válido con Let's Encrypt.  
+Implementación de un balanceador de cargas con Docker y nginx en una instancia de GCP, en la capa de aplicación del Wordpress.  
+Implementación de un servidor de base de datos con Docker en una instancia de GCP, conectado al Wordpress.  
+Implementación de un servidor para archivos con Docker en una instancia de GCP, conectado al Wordpress.
 
 ## 1.2. Que aspectos NO cumplió o desarrolló de la actividad propuesta por el profesor (requerimientos funcionales y no funcionales)
+Se puede acceder al Wordpress desde su dirección IP pública, pero no se logra acceder desde el dominio, aún así teniendo el certificado SSL.
 
-# 2. información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
+# 2. Información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 
 # 3. Descripción del ambiente de desarrollo y técnico: lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 

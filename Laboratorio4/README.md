@@ -16,7 +16,7 @@ Implementación de un servidor de base de datos con Docker en una instancia de G
 Implementación de un servidor para archivos con Docker en una instancia de GCP, conectado al Wordpress.
 
 ## 1.2. Que aspectos NO cumplió o desarrolló de la actividad propuesta por el profesor (requerimientos funcionales y no funcionales)
-Se puede acceder al Wordpress desde su dirección IP pública, pero no se logra acceder desde el dominio, aún así teniendo el certificado SSL.
+Todos los aspectos se cumplieron y desarrollaron.
 
 # 2. Información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 Se utilizaron contenedores en Docker para la ejecución del proyecto, nginx y MySQL.
@@ -43,7 +43,219 @@ Para el registro A se le asigna la dirección IP elástica de la instancia asign
 
 ![4](https://user-images.githubusercontent.com/37346028/197835553-73e73278-0dec-414b-9279-99685b4e63f0.PNG)
 
-### 1. Balanceador de cargas
+
+### 1. Servidor NFS
+1. Para crear el servidor NFS se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
+
+2. Se instala nfs-kernel-server. Para esto, se ejecutan los siguientes comandos:
+```
+sudo apt update
+sudo apt install nfs-kernel-server
+sudo apt install ufw
+```
+
+3. Se crea una carpeta para compartir archivos en el servidor NFS:
+```
+sudo mkdir -p /mnt/nfs_share
+```
+
+4. Ingresamos al archivo /etc/exports:
+```
+sudo nano /etc/exports
+```
+Agregamos el siguiente comando al final del archivo:
+```
+/mnt/nfs_share 10.128.0.0/20(rw,sync,no_subtree_check,no_root_squash)
+```
+
+5. Exportamos el nuevo NFS:
+```
+sudo exportfs -a
+```
+
+6. Actualizamos las nuevas reglas del firewall:
+```
+sudo systemctl restart nfs-kernel-server
+sudo ufw allow from 10.128.0.0/20 to any port nfs
+sudo ufw enable
+sudo ufw status
+sudo ufw allow 22
+```
+
+### 2. Servidor de base de datos
+1. Para crear el servidor de base de datos se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
+
+2. Se instala docker y docker-compose. Para esto, se ejecutan los siguientes comandos:
+```
+sudo apt install docker.io -y
+sudo apt install docker-compose -y
+```
+
+3. Creamos un directorio para el docker container y accedemos a este:
+```
+mkdir docker
+cd docker
+```
+
+4. Creamos los archivos de configuración con los siguientes comandos:
+```
+sudo touch Dockerfile
+sudo touch docker-compose.yaml
+```
+
+5. Ingresamos al archivo Dockerfile:
+```
+sudo nano Dockerfile
+```
+Añadimos el siguiente contenido al archivo:
+```
+FROM mysql:8.0
+```
+
+6. Ingresamos al docker-compose.yaml:
+```
+sudo nano docker-compose.yaml
+```
+Añadimos el siguiente contenido al archivo:
+```
+version: "3.7"
+services:
+  mysql:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dbserver
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: "wordpressdb"
+    volumes:
+      - ./schemas:/var/lib/mysql:rw
+volumes:
+  schemas: {}
+```
+
+7. Ponemos a funcionar docker:
+```
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -a -G docker asarangog
+sudo reboot
+```
+
+8. Corremos el contenedor docker y accedemos a MySQL:
+```
+cd docker
+sudo docker-compose up --build -d
+sudo docker exec -it dbserver mysql -p
+```
+Ingresamos a MySQL con la contraseña creada anteriormente.
+
+9. Creamos la base de datos:
+```
+CREATE DATABASE wpdb;
+```
+![7](https://user-images.githubusercontent.com/37346028/197864801-8ec1dd74-71e6-4a95-9730-0916f672d967.PNG)
+
+10. Creamos un usuario para la base de datos y le otorgamos todos los privilegios:
+```
+CREATE USER 'asarangog' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON *.* TO 'asarangog'@'%';
+exit
+```
+
+### 3. Servidores de Wordpress
+Estos pasos se deben realizar para las dos instancias del Wordpress.
+
+1. Para crear el servidor de Wordpress se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
+
+2. Se instala nfs-common, docker y docker-compose. Para esto, se ejecutan los siguientes comandos:
+```
+sudo apt update
+sudo apt install nfs-common -y
+sudo apt install docker.io -y
+sudo apt install docker-compose -y
+```
+
+3. Ingresamos al archivo /etc/fstab:
+```
+sudo nano /etc/fstab
+```
+Agregamos el siguiente comando al archivo, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor NFS:
+```
+10.128.0.58:/mnt/nfs_share /var/www/html nfs auto 0 0
+```
+
+4. Para conectar el Wordpress al servidor NFS se crea el directorio donde se compartirán los archivos:
+```
+sudo mkdir -p /mnt/nfs_clientshare
+```
+Luego, se ejecuta el siguiente comando, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor NFS:
+```
+sudo mount 10.128.0.58:/mnt/nfs_share /mnt/nfs_clientshare
+```
+
+5. Para verificar que la conexión funciona desde la instancia del servidor NFS se ejecutan los siguientes comandos:
+```
+cd /mnt/nfs_share/
+sudo touch sample1.text sample2.text
+```
+Luego, se regresa a la instancia del Wordpress y se ejecuta el siguiente comando:
+```
+ls -l /mnt/nfs_clientshare/
+```
+El resultado es el siguiente:  
+![8](https://user-images.githubusercontent.com/37346028/197872967-8356a2f1-b33d-4c84-8a80-fd8b1628b2a4.PNG)
+![9](https://user-images.githubusercontent.com/37346028/197872992-db75f212-7170-449d-96b5-c306f0deaad5.PNG)
+
+6. Ponemos a funcionar docker:
+```
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -a -G docker asarangog
+sudo reboot
+```
+
+7. Creamos un directorio para el docker container y accedemos a este:
+```
+mkdir docker
+cd docker
+```
+
+8. Creamos un archivo docker-compose.yaml e ingresamos a este:
+```
+sudo touch docker-compose.yaml
+sudo nano docker-compose.yaml
+```
+Agregamos el siguiente contenido al archivo, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor de base de datos y el usuario, la contraseña y el nombre de la base de datos son los creados anteriormente:
+```
+version: '3.7'
+services:
+  wordpress:
+    container_name: wordpress
+    image: wordpress:latest
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: 10.128.0.59:3306
+      WORDPRESS_DB_USER: asarangog
+      WORDPRESS_DB_PASSWORD: 1234
+      WORDPRESS_DB_NAME: wpdb
+    volumes:
+      - /var/www/html:/var/www/html
+    ports:
+      - 80:80
+volumes:
+  wordpress:
+```
+
+9. Ponemos a funcionar el contenedor con el siguiente comando:
+```
+sudo docker-compose up --build -d
+```
+
+### 4. Balanceador de cargas
 1. Para crear el balanceador de cargas se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
 
 2. Se instala certbot, letsencrypt y nginx. Para esto, se ejecutan los siguientes comandos:
@@ -221,217 +433,6 @@ cd /home/asarangog/nginx
 docker-compose up --build -d
 ```
 
-### 2. Servidor de base de datos
-1. Para crear el servidor de base de datos se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
-
-2. Se instala docker y docker-compose. Para esto, se ejecutan los siguientes comandos:
-```
-sudo apt install docker.io -y
-sudo apt install docker-compose -y
-```
-
-3. Creamos un directorio para el docker container y accedemos a este:
-```
-mkdir docker
-cd docker
-```
-
-4. Creamos los archivos de configuración con los siguientes comandos:
-```
-sudo touch Dockerfile
-sudo touch docker-compose.yaml
-```
-
-5. Ingresamos al archivo Dockerfile:
-```
-sudo nano Dockerfile
-```
-Añadimos el siguiente contenido al archivo:
-```
-FROM mysql:8.0
-```
-
-6. Ingresamos al docker-compose.yaml:
-```
-sudo nano docker-compose.yaml
-```
-Añadimos el siguiente contenido al archivo:
-```
-version: "3.7"
-services:
-  mysql:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dbserver
-    restart: always
-    ports:
-      - 3306:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: "1234"
-      MYSQL_DATABASE: "wordpressdb"
-    volumes:
-      - ./schemas:/var/lib/mysql:rw
-volumes:
-  schemas: {}
-```
-
-7. Ponemos a funcionar docker:
-```
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo usermod -a -G docker asarangog
-sudo reboot
-```
-
-8. Corremos el contenedor docker y accedemos a MySQL:
-```
-cd docker
-sudo docker-compose up --build -d
-sudo docker exec -it dbserver mysql -p
-```
-Ingresamos a MySQL con la contraseña creada anteriormente.
-
-9. Creamos la base de datos:
-```
-CREATE DATABASE wpdb;
-```
-![7](https://user-images.githubusercontent.com/37346028/197864801-8ec1dd74-71e6-4a95-9730-0916f672d967.PNG)
-
-10. Creamos un usuario para la base de datos y le otorgamos todos los privilegios:
-```
-CREATE USER 'asarangog' IDENTIFIED BY '1234';
-GRANT ALL PRIVILEGES ON *.* TO 'asarangog'@'%';
-exit
-```
-
-### 3. Servidor NFS
-1. Para crear el servidor NFS se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
-
-2. Se instala nfs-kernel-server. Para esto, se ejecutan los siguientes comandos:
-```
-sudo apt update
-sudo apt install nfs-kernel-server
-sudo apt install ufw
-```
-
-3. Se crea una carpeta para compartir archivos en el servidor NFS:
-```
-sudo mkdir -p /mnt/nfs_share
-```
-
-4. Ingresamos al archivo /etc/exports:
-```
-sudo nano /etc/exports
-```
-Agregamos el siguiente comando al final del archivo:
-```
-/mnt/nfs_share 10.128.0.0/20(rw,sync,no_subtree_check)
-```
-
-5. Exportamos el nuevo NFS:
-```
-sudo exportfs
-```
-
-6. Actualizamos las nuevas reglas del firewall:
-```
-sudo systemctl restart nfs-kernel-server
-sudo ufw allow from 10.128.0.0/20 to any port nfs
-sudo ufw enable
-sudo ufw status
-sudo ufw allow 22
-```
-
-### 4. Servidores de Wordpress
-Estos pasos se deben realizar para las dos instancias del Wordpress.
-
-1. Para crear el servidor de Wordpress se conecta a la instancia de GCP dando click en la opción SSH de la máquina asignada a este mismo.
-
-2. Se instala nfs-common, docker y docker-compose. Para esto, se ejecutan los siguientes comandos:
-```
-sudo apt update
-sudo apt install nfs-common -y
-sudo apt install docker.io -y
-sudo apt install docker-compose -y
-```
-
-3. Ingresamos al archivo /etc/fstab:
-```
-sudo nano /etc/fstab
-```
-Agregamos el siguiente comando al archivo, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor NFS:
-```
-10.128.0.58:/mnt/nfs_share /var/www/html nfs auto 0 0
-```
-
-4. Para conectar el Wordpress al servidor NFS se crea el directorio donde se compartirán los archivos:
-```
-sudo mkdir -p /mnt/nfs_clientshare
-```
-Luego, se ejecuta el siguiente comando, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor NFS:
-```
-sudo mount 10.128.0.58:/mnt/nfs_share /mnt/nfs_clientshare
-```
-
-5. Para verificar que la conexión funciona desde la instancia del servidor NFS se ejecutan los siguientes comandos:
-```
-cd /mnt/nfs_share/
-sudo touch sample1.text sample2.text
-```
-Luego, se regresa a la instancia del Wordpress y se ejecuta el siguiente comando:
-```
-ls -l /mnt/nfs_clientshare/
-```
-El resultado es el siguiente:  
-![8](https://user-images.githubusercontent.com/37346028/197872967-8356a2f1-b33d-4c84-8a80-fd8b1628b2a4.PNG)
-![9](https://user-images.githubusercontent.com/37346028/197872992-db75f212-7170-449d-96b5-c306f0deaad5.PNG)
-
-6. Ponemos a funcionar docker:
-```
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo usermod -a -G docker asarangog
-sudo reboot
-```
-
-7. Creamos un directorio para el docker container y accedemos a este:
-```
-mkdir docker
-cd docker
-```
-
-8. Creamos un archivo docker-compose.yaml e ingresamos a este:
-```
-sudo touch docker-compose.yaml
-sudo nano docker-compose.yaml
-```
-Agregamos el siguiente contenido al archivo, teniendo en cuenta que la dirección IP es la correspondiente a la instancia asignada al servidor de base de datos y el usuario, la contraseña y el nombre de la base de datos son los creados anteriormente:
-```
-version: '3.7'
-services:
-  wordpress:
-    container_name: wordpress
-    image: wordpress:latest
-    restart: always
-    environment:
-      WORDPRESS_DB_HOST: 10.128.0.59:3306
-      WORDPRESS_DB_USER: asarangog
-      WORDPRESS_DB_PASSWORD: 1234
-      WORDPRESS_DB_NAME: wpdb
-    volumes:
-      - /var/www/html:/var/www/html
-    ports:
-      - 80:80
-volumes:
-  wordpress:
-```
-
-9. Ponemos a funcionar el contenedor con el siguiente comando:
-```
-sudo docker-compose up --build -d
-```
-
 ## Detalles técnicos
 Se usó GCP para desplegar las máquinas virtuales.  
 Se usaron contenedores de Docker.  
@@ -444,6 +445,10 @@ Resultados y obtención del certificado SSL válido.
 
 ![5](https://user-images.githubusercontent.com/37346028/197877880-1dc3fa29-f3ec-4784-b0df-64f9e8bc2c43.PNG)
 ![6](https://user-images.githubusercontent.com/37346028/197877907-af064330-1999-4f27-aebb-ed4b453eeaca.PNG)
+
+Resultados de la aplicación.
+
+![10](https://user-images.githubusercontent.com/37346028/200088555-4e5ad415-971e-454e-a91d-e4aa6dd754ce.PNG)
 
 # 4. Descripción del ambiente de EJECUCIÓN (en producción) lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 Docker, Nginx y MySQL.

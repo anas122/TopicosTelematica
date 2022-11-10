@@ -71,10 +71,9 @@ Para comenzar creamos un cluster en el servicio EMR de AWS
 
 # 5. otra información que considere relevante para esta actividad.
 
-# referencias:
-<debemos siempre reconocer los créditos de partes del código que reutilizaremos, así como referencias a youtube, o referencias bibliográficas utilizadas para desarrollar el proyecto o la actividad>
-## sitio1-url 
-## sitio2-url
-## url de donde tomo info para desarrollar este proyecto
+# Referencias:
+## https://github.com/st0263eafit/st0263-2022-2/tree/main/bigdata
+## https://www.youtube.com/watch?v=MyXSwxN5Zdk&ab_channel=EdwinNelsonMontoya
+## https://www.youtube.com/watch?v=3sao-qJG34Y&ab_channel=EdwinNelsonMontoya
 
-#### versión README.md -> 1.0 (2022-agosto)
+#### versión README.md -> 1.0 (2022-Noviembre)

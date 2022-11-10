@@ -20,7 +20,7 @@ Creación de un cluster, como usarlo a través de Hue, Jupyter Notebook y Zeppel
 
 ## Como se compila y ejecuta.
 ## Detalles del desarrollo.
-### Laboratorio 5-1
+### Laboratorio 5-1 y 5-2
 Para comenzar creamos un cluster en el servicio EMR de AWS
 ![1](https://user-images.githubusercontent.com/37346028/200106035-66b31c5e-954b-4e32-bbc2-027304598849.PNG)
 ![2](https://user-images.githubusercontent.com/37346028/200106036-f6d92ce8-4354-4c5c-b7c9-5d6b103efbac.PNG)
